@@ -1,7 +1,10 @@
 import os
 import numpy as np
 import pandas as pd
-
+import copy
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm, Normalize
 
 def read_text(path):
     """Read article.
@@ -89,3 +92,27 @@ class DataReader():
         df_data_all = self.spark.createDataFrame(pd_df, list(pd_df.columns.values))
 
         return df_data_all
+
+
+def make_heatmap(rdd_collected, title, epoch_time):
+    my_cmap = copy.copy(plt.cm.get_cmap('plasma'))
+    my_cmap.set_bad((0, 0, 0))
+
+    # rdd_collected = rdd.collect()
+    n = len(rdd_collected)
+    heatmap = np.zeros((n, n))
+
+    for idx_l, l in enumerate(rdd_collected):
+        for idx_t, t in enumerate(l):
+            idx, s = t
+            assert idx_t == idx
+            heatmap[idx_l, idx_t] = s
+
+    plt.figure(figsize=(10, 10))
+
+    sns.heatmap(heatmap, square=True, norm=LogNorm(), cmap=my_cmap)
+
+    plt.title(title)
+    fname = title + "_" + str(epoch_time) + ".png"
+    plt.savefig(f"assets/{fname}")
+    plt.plot()
